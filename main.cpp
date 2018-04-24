@@ -31,9 +31,10 @@ int main(void)
 
     // An array of floats to store the triangle's point vertices
     float positions[6] = {
-            -0.5f, -0.5f,
-            0.0f, 0.5f,
-            0.5f, -0.5f
+        //  Xcoord Ycoord
+            -0.5f, -0.5f, // 1st vertex, made up of only 1 attribute (position)
+             0.0f,  0.5f, // 2nd vertex, " "
+             0.5f, -0.5f  // 3rd & final vertex, " "
     };
 
     // Defining OpenGL Vertex Buffer
@@ -45,6 +46,13 @@ int main(void)
     glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW); // how big do we actually need this buffer to be? (the same size as the array), the data that will be copied into the buffer, and a hint to OpenGL as to the expected usage pattern of the buffer (how frequently writen and read?)
     // note: the expected usage pattern is GL_STATIC_DRAW because, STATIC means that we expect the buffer to be written only once, but read many times
     // ie, the positions of the triangles points are only established once, but must be called to each loop to render
+
+    // Enable the first (0th) attribute in the array in question (positions):
+    glEnableVertexAttribArray(0); // which attribute in the array are we talking about here? (the first and only one; e.g. index 0)
+
+    // Giving details on each attribute of the vertex array, in this case, the position coordinates:
+    // (this is all so OpenGL knows specifically what sort of data this is and, in turn, how to parse & use it)
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GL_FLOAT), 0); // what index (or attribute number) is this we're talking about? how many values per vertices? what is the data type of the values? are the values already normalised (if not, OpenGL will normalise them for us (0-255 -> 0.0f-1.0f)? the amount of bytes between each vertex (i.e. 2 floats)? what is the size of each attribute (e.g. the position) in a vertex? what is the offset (the num of bytes prior) to this attribute (in this case 0, because it's the first attribute of each vertex)?
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
