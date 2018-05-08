@@ -1,8 +1,53 @@
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream> // AKA String Stream
 using namespace std;
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+struct ShaderProgramSource
+{
+    string vertexSource;
+    string fragmentSource;
+
+};
+
+static ShaderProgramSource parseShader(const string& filePath) // TODO: Why not just return a stringstream?
+{
+    ifstream stream(filePath); // ifstream = Input File Stream
+
+    enum class ShaderType  // which type of shader are we currently reading in? Vertex or Fragment?
+    {
+        NONE = -1, VERTEX = 0, FRAGMENT = 1 // represents the index in our ss array
+    };
+
+    string line; // the current line that the while loop is on
+    stringstream ss[2]; // 1 for the Vertex Shader, 1 for the Fragment Shader (StringStreams are better designed for iteratively concating onto a string)
+    ShaderType type = ShaderType::NONE;
+
+    while(getline(stream, line)) // while there are more lines to include within the file
+    {
+        if(line.find("#shader") != string::npos) // if doesn't equal an invalid string position
+        {
+            if(line.find("vertex") != string::npos) // if vertex is found on the same line (ie, if we've found the vertex shader)
+            {
+                type = ShaderType::VERTEX; // i.e. type = 0
+            }
+            else if(line.find("fragment") != string::npos) // if fragment is found on the same line (ie, if we've found the fragment shader)
+            {
+                type = ShaderType::FRAGMENT; // i.e. type = 1
+            }
+        }
+        else // in this case we are reading a line below either the vertex or the fragment shader tags
+        {
+            ss[(int)type] << line << '\n'; // adding the current line to the relevant index in our ss, concat with a newline
+        }
+    }
+
+    return {ss[0].str(), ss[1].str()};
+}
 
 static unsigned int CompileShader(unsigned int type, const string& source) // type is actually of type GLuint, but on paper that's the same as an unsigned int
 {
@@ -124,29 +169,8 @@ int main()
     // (this is all so OpenGL knows specifically what sort of data this is and, in turn, how to parse & use it)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GL_FLOAT), 0); // what index (or attribute number) is this we're talking about? how many values per vertices? what is the data type of the values? are the values already normalised (if not, OpenGL will normalise them for us (0-255 -> 0.0f-1.0f)? the amount of bytes between each vertex (i.e. 2 floats)? what is the size of each attribute (e.g. the position) in a vertex? what is the offset (the num of bytes prior) to this attribute (in this case 0, because it's the first attribute of each vertex)?
 
-    // Source code for the Vertex Shader (written in GLSL shader language):
-    string vertexShader =
-            "#version 330 core\n"
-            "\n"
-            "layout(location = 0) in vec4 position;\n" // accessing the position (0th) attribute of the position array, within GLSL
-            "\n"
-            "void main()\n" // the main function for the shader
-            "{\n"
-            "   gl_Position = position;\n"
-            "}";
-
-    // Source code for the Fragment Shader (written in GLSL shader language):
-    string fragmentShader =
-            "#version 330 core\n"
-            "\n"
-            "layout(location = 0) out vec4 color;\n" // adding an additional "color" attribute to the vertices
-            "\n"
-            "void main()\n" // the main function for the shader
-            "{\n"
-            "   color = vec4(1.0, 0.5, 0.2, 1.0);\n"
-            "}";
-
-    unsigned int shader = CreateShader(vertexShader, fragmentShader);
+    ShaderProgramSource source = parseShader("/Users/TheSpaceEvader/Documents/C++ Projects/GLFW OpenGL(Cherno)/resources/shaders/basic.shader"); // TODO: why doesnt 'resources/shaders/basic.shader' work???
+    unsigned int shader = CreateShader(source.vertexSource, source.fragmentSource);
     glUseProgram(shader); // binds the "shader" program
 
     /* Loop until the user closes the window */
