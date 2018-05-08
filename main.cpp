@@ -1,11 +1,32 @@
 #include <iostream>
 #include <fstream>
-#include <string>
+//#include <string>
 #include <sstream> // AKA String Stream
 using namespace std;
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+#define ASSERT(x) if (!(x)) __debugbreak();
+#define GLCall(x) GLClearError();\
+    x;\
+    /*ASSERT(*/GLLogCall(#x, __FILE__, __LINE__)/*)*/
+
+static void GLClearError()
+{
+    while(glGetError() != GL_NO_ERROR); // while we have have an error (!= no_error), keep getting errors
+
+}
+
+static bool GLLogCall(const char* function, const char* file, int line)
+{
+    while(GLenum error = glGetError()) // while error not = 0 // TODO double check this
+    {
+        cout << "[OpenGL Error] (" << error << "): " << function << " " << file << ":" << line << endl;
+        return false;
+    }
+    return true;
+}
 
 struct ShaderProgramSource
 {
@@ -67,9 +88,8 @@ static unsigned int CompileShader(unsigned int type, const string& source) // ty
     {
         int length;
         glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-        char/* * */ message[length]; // TODO: https://youtu.be/71BLZwRGUJE?t=15m58s
-        // todo: replace ^^^ with:
-        // char* message = (char*)alloca(length * sizeof(char));
+        char message[length]; // TODO: https://youtu.be/71BLZwRGUJE?t=15m58s
+        // todo: replace ^^^ with char* message = (char*)alloca(length * sizeof(char));
         glGetShaderInfoLog(id, length, &length, message);
 
 
@@ -176,9 +196,9 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GL_FLOAT), 0); // what index (or attribute number) is this we're talking about? how many values per vertices? what is the data type of the values? are the values already normalised (if not, OpenGL will normalise them for us (0-255 -> 0.0f-1.0f)? the amount of bytes between each vertex (i.e. 2 floats)? what is the size of each attribute (e.g. the position) in a vertex? what is the offset (the num of bytes prior) to this attribute (in this case 0, because it's the first attribute of each vertex)?
 
     // Defining Index Buffer Object
-    unsigned int ibo;
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    unsigned int IBO;
+    glGenBuffers(1, &IBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     ShaderProgramSource source = parseShader("/Users/TheSpaceEvader/Documents/C++ Projects/GLFW OpenGL(Cherno)/resources/shaders/basic.shader"); // TODO: why doesnt 'resources/shaders/basic.shader' work???
@@ -194,7 +214,7 @@ int main()
 
         // (glDraw function call goes in here to draw the triangle!!) For example:
 //        glDrawArrays(GL_TRIANGLES, 0, 6); // what sort of shape are we talking about here? from what position in this array do we start working from? how many positions are we talking about?
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // what sort of shape are we talking about here? How many indices are we drawing? What type of data is in the index buffer? Give a pointer to the index buffer (although in this case is already bound so not required by default)
+        GLCall(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr)); // what sort of shape are we talking about here? How many indices are we drawing? What type of data is in the index buffer? Give a pointer to the index buffer (although in this case is already bound so not required by default)
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
