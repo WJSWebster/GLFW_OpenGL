@@ -141,16 +141,22 @@ int main()
         cout << "ERROR::GLEWINIT()_FAILED" << endl;
 
     // An array of floats to store the triangle's point vertices
-    float positions[6] = {
-        //  Xcoord Ycoord
-            -0.5f, -0.5f, // 1st vertex, made up of only 1 attribute (position)
-             0.0f,  0.5f, // 2nd vertex, " "
-             0.5f, -0.5f  // 3rd & final vertex, " "
+    float positions[] = {
+        //  Xcoord,Ycoord
+            -0.5f, -0.5f, // 1st vertex, made up of only 1 attribute (position) // Index 0
+             0.5f, -0.5f, // 2nd vertex, " "                                    // Index 1
+             0.5f,  0.5f, // 3rd & final vertex, " "                            // Index 2
+            -0.5f,  0.5f                                                        // Index 3
     };
 
-    // Defining OpenGL Vertex Buffer Object
+    unsigned int indices[] = { // An index buffer, with each index indexing the coordinates of each polygon/triangle
+        0, 1, 2,
+        2, 3, 0
+    };
+
+    // Defining Vertex Buffer Object
     unsigned int buffer;
-    // Defining OpenGL Vertex Array Object
+    // Defining Vertex Array Object
     GLuint VAO;
 
     glGenVertexArrays(1, &VAO); // TODO: what does this do?
@@ -169,6 +175,12 @@ int main()
     // (this is all so OpenGL knows specifically what sort of data this is and, in turn, how to parse & use it)
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GL_FLOAT), 0); // what index (or attribute number) is this we're talking about? how many values per vertices? what is the data type of the values? are the values already normalised (if not, OpenGL will normalise them for us (0-255 -> 0.0f-1.0f)? the amount of bytes between each vertex (i.e. 2 floats)? what is the size of each attribute (e.g. the position) in a vertex? what is the offset (the num of bytes prior) to this attribute (in this case 0, because it's the first attribute of each vertex)?
 
+    // Defining Index Buffer Object
+    unsigned int ibo;
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
     ShaderProgramSource source = parseShader("/Users/TheSpaceEvader/Documents/C++ Projects/GLFW OpenGL(Cherno)/resources/shaders/basic.shader"); // TODO: why doesnt 'resources/shaders/basic.shader' work???
     unsigned int shader = CreateShader(source.vertexSource, source.fragmentSource);
     glUseProgram(shader); // binds the "shader" program
@@ -181,7 +193,8 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         // (glDraw function call goes in here to draw the triangle!!) For example:
-        glDrawArrays(GL_TRIANGLES, 0, 3); // what sort of shape are we talking about here? from what position in this array do we start working from? how many positions are we talking about?
+//        glDrawArrays(GL_TRIANGLES, 0, 6); // what sort of shape are we talking about here? from what position in this array do we start working from? how many positions are we talking about?
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // what sort of shape are we talking about here? How many indices are we drawing? What type of data is in the index buffer? Give a pointer to the index buffer (although in this case is already bound so not required by default)
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
